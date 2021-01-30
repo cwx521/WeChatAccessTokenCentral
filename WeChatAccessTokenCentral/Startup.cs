@@ -39,8 +39,20 @@ namespace WeChatAccessTokenCentral
 							var result = JsonSerializer.Deserialize<AccessTokenModel>(json);
 							var success = result != null && result.access_token != null;
 
-							entry.SetAbsoluteExpiration(TimeSpan.FromMilliseconds(success ? (result.expires_in * 999) : 1));
-							return json;
+							if ( !success ) {
+								entry.SetAbsoluteExpiration(TimeSpan.FromMilliseconds(1));
+								return json;
+							}
+							else {
+								var timeSpan = TimeSpan.FromMilliseconds(result.expires_in * 999);
+								entry.SetAbsoluteExpiration(timeSpan);
+
+								return JsonSerializer.Serialize(new {
+									result.access_token,
+									result.expires_in,
+									expires_at = DateTime.Now.Add(timeSpan)
+								});
+							}
 						})
 					);
 				});
